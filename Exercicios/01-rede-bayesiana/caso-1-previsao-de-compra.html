@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício Rede Bayesiana 01</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        h1, h2 {
+            margin-bottom: 5px;
+        }
+
+        section {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .resultado {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1b7f3a;
+        }
+
+        .nao-compra {
+            color: #b3261e;
+        }
+
+        .decisao {
+            background: #eef7ff;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Exercício Rede Bayesiana 01</h1>
+<h2>Previsão de compra</h2>
+
+<section>
+    <h3>Pergunta / Problema</h3>
+    <p>Esse cliente vai comprar?</p>
+</section>
+
+<section>
+    <h3>Variáveis</h3>
+    <ul>
+        <li>Histórico de compras</li>
+        <li>Tempo no site</li>
+        <li>Clique em promoção</li>
+        <li>Origem do tráfego</li>
+        <li>Valor do carrinho</li>
+        <li>Dispositivo</li>
+    </ul>
+</section>
+
+<section>
+    <h3>Escolha as evidências do cliente</h3>
+
+    <label for="historico">Histórico de compras</label>
+    <select id="historico">
+        <option value="0">Não tem histórico</option>
+        <option value="1" selected>Tem histórico</option>
+    </select>
+
+    <label for="tempo">Tempo no site</label>
+    <select id="tempo">
+        <option value="0" selected>Pouco tempo</option>
+        <option value="1">Muito tempo</option>
+    </select>
+
+    <label for="promocao">Clique em promoção</label>
+    <select id="promocao">
+        <option value="0">Não clicou</option>
+        <option value="1" selected>Clicou</option>
+    </select>
+
+    <label for="origem">Origem do tráfego</label>
+    <select id="origem">
+        <option value="0" selected>Sem origem identificada</option>
+        <option value="1">Banner / Social</option>
+        <option value="2">Google Ads</option>
+    </select>
+
+    <label for="carrinho">Valor do carrinho</label>
+    <select id="carrinho">
+        <option value="0">Carrinho zerado</option>
+        <option value="1">Maior que R$ 10.000</option>
+        <option value="2">Maior que R$ 1.000</option>
+        <option value="3" selected>Menor que R$ 1.000 e maior que R$ 0</option>
+    </select>
+
+    <label for="dispositivo">Dispositivo</label>
+    <select id="dispositivo">
+        <option value="0" selected>Mobile</option>
+        <option value="1">Desktop</option>
+    </select>
+
+    <button onclick="executarRedeBayesiana()">Calcular probabilidade</button>
+</section>
+
+<section>
+    <h3>Resultado</h3>
+
+    <p>
+        <strong>Probabilidade de compra:</strong>
+        <span id="resultadoCompra" class="resultado">70%</span>
+    </p>
+
+    <p>
+        <strong>Probabilidade de não comprar:</strong>
+        <span id="resultadoNaoCompra" class="resultado nao-compra">30%</span>
+    </p>
+</section>
+
+<section class="decisao">
+    <h3>Decisão</h3>
+    <ul id="listaDecisoes">
+        <li>Mostrar cupom</li>
+        <li>Priorizar atendimento</li>
+        <li>Recomendar produto</li>
+        <li>Enviar lembrete</li>
+    </ul>
+</section>
+
+<script>
+    // 1. Criando as probabilidades da Rede Bayesiana
+
+    const probabilidades = {
+        HistoricoDeCompras: {
+            0: 0.7, // 0: Não tem histórico
+            1: 0.3  // 1: Tem histórico
+        },
+
+        TempoNoSite: {
+            0: 0.6, // 0: Pouco tempo
+            1: 0.4  // 1: Muito tempo
+        },
+
+        CliqueEmPromocao: {
+            0: 0.8, // 0: Não clicou em promoção
+            1: 0.2  // 1: Clicou em promoção
+        },
+
+        OrigemDoTrafego: {
+            0: 0.7, // 0: Sem origem identificada
+            1: 0.2, // 1: Banner / Social
+            2: 0.1  // 2: Google Ads
+        },
+
+        ValorDoCarrinho: {
+            0: 0.1, // 0: Carrinho zerado
+            1: 0.4, // 1: Maior que R$ 10.000
+            2: 0.3, // 2: Maior que R$ 1.000
+            3: 0.2  // 3: Menor que R$ 1.000 e maior que R$ 0
+        },
+
+        Dispositivo: {
+            0: 0.7, // 0: Mobile
+            1: 0.3  // 1: Desktop
+        },
+
+        /*
+            Evento principal: Compra
+
+            Em uma Rede Bayesiana completa, você poderia criar uma tabela gigante
+            com todas as combinações possíveis.
+
+            Mas como temos 6 variáveis, isso geraria muitas combinações.
+
+            Então aqui usamos uma versão didática:
+            - começa com uma probabilidade base
+            - cada evidência aumenta ou diminui a chance de compra
+        */
+
+        Compra: {
+            base: 0.10,
+
+            pesos: {
+                HistoricoDeCompras: {
+                    0: 0.00,
+                    1: 0.25
+                },
+
+                TempoNoSite: {
+                    0: 0.00,
+                    1: 0.15
+                },
+
+                CliqueEmPromocao: {
+                    0: 0.00,
+                    1: 0.20
+                },
+
+                OrigemDoTrafego: {
+                    0: 0.00,
+                    1: 0.10,
+                    2: 0.15
+                },
+
+                ValorDoCarrinho: {
+                    0: -0.10,
+                    1: 0.30,
+                    2: 0.22,
+                    3: 0.10
+                },
+
+                Dispositivo: {
+                    0: 0.05,
+                    1: 0.08
+                }
+            }
+        }
+    };
+
+
+    // 2. Função para limitar a probabilidade entre 0 e 1
+
+    function limitarProbabilidade(valor) {
+        if (valor < 0) {
+            return 0;
+        }
+
+        if (valor > 1) {
+            return 1;
+        }
+
+        return valor;
+    }
+
+
+    // 3. Função para calcular a probabilidade de compra
+
+    function calcularProbabilidadeCompra(evidencias) {
+        let probCompra = probabilidades.Compra.base;
+
+        probCompra += probabilidades.Compra.pesos.HistoricoDeCompras[evidencias.HistoricoDeCompras];
+        probCompra += probabilidades.Compra.pesos.TempoNoSite[evidencias.TempoNoSite];
+        probCompra += probabilidades.Compra.pesos.CliqueEmPromocao[evidencias.CliqueEmPromocao];
+        probCompra += probabilidades.Compra.pesos.OrigemDoTrafego[evidencias.OrigemDoTrafego];
+        probCompra += probabilidades.Compra.pesos.ValorDoCarrinho[evidencias.ValorDoCarrinho];
+        probCompra += probabilidades.Compra.pesos.Dispositivo[evidencias.Dispositivo];
+
+        probCompra = limitarProbabilidade(probCompra);
+
+        const probNaoCompra = 1 - probCompra;
+
+        return {
+            Comprar: probCompra,
+            NaoComprar: probNaoCompra
+        };
+    }
+
+
+    // 4. Função para definir decisões com base na probabilidade
+
+    function definirDecisoes(probCompra) {
+        if (probCompra >= 0.70) {
+            return [
+                "Mostrar cupom",
+                "Priorizar atendimento",
+                "Recomendar produto",
+                "Enviar lembrete"
+            ];
+        }
+
+        if (probCompra >= 0.45) {
+            return [
+                "Recomendar produto",
+                "Mostrar produtos relacionados",
+                "Enviar lembrete caso abandone o carrinho"
+            ];
+        }
+
+        if (probCompra >= 0.20) {
+            return [
+                "Enviar lembrete",
+                "Mostrar benefício do produto",
+                "Exibir prova social ou avaliações"
+            ];
+        }
+
+        return [
+            "Não priorizar atendimento agora",
+            "Fazer campanha de remarketing",
+            "Enviar conteúdo educativo"
+        ];
+    }
+
+
+    // 5. Função para executar tudo no HTML
+
+    function executarRedeBayesiana() {
+        const evidencias = {
+            HistoricoDeCompras: Number(document.getElementById("historico").value),
+            TempoNoSite: Number(document.getElementById("tempo").value),
+            CliqueEmPromocao: Number(document.getElementById("promocao").value),
+            OrigemDoTrafego: Number(document.getElementById("origem").value),
+            ValorDoCarrinho: Number(document.getElementById("carrinho").value),
+            Dispositivo: Number(document.getElementById("dispositivo").value)
+        };
+
+        const resultados = calcularProbabilidadeCompra(evidencias);
+
+        const probCompraPorcentagem = Math.round(resultados.Comprar * 100);
+        const probNaoCompraPorcentagem = Math.round(resultados.NaoComprar * 100);
+
+        document.getElementById("resultadoCompra").innerText = probCompraPorcentagem + "%";
+        document.getElementById("resultadoNaoCompra").innerText = probNaoCompraPorcentagem + "%";
+
+        const decisoes = definirDecisoes(resultados.Comprar);
+
+        const listaDecisoes = document.getElementById("listaDecisoes");
+        listaDecisoes.innerHTML = "";
+
+        decisoes.forEach(function(decisao) {
+            const item = document.createElement("li");
+            item.innerText = decisao;
+            listaDecisoes.appendChild(item);
+        });
+
+        console.log("Evidências usadas:");
+        console.log(evidencias);
+
+        console.log("Probabilidades:");
+        console.log("Comprar:", resultados.Comprar.toFixed(2));
+        console.log("Não Comprar:", resultados.NaoComprar.toFixed(2));
+    }
+
+
+    // 6. Executa automaticamente ao abrir a página
+
+    executarRedeBayesiana();
+</script>
+
+</body>
+</html>

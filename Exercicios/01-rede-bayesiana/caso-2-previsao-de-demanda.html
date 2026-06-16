@@ -1,0 +1,334 @@
+```html id="caso-2-previsao-demanda"
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício Rede Bayesiana 02</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        section {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .resultado {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1b7f3a;
+        }
+
+        .decisao {
+            background: #eef7ff;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Exercício Rede Bayesiana 02</h1>
+<h2>Previsão de demanda</h2>
+
+<section>
+    <h3>Pergunta / Problema</h3>
+    <p>Quanto vou vender no próximo mês?</p>
+</section>
+
+<section>
+    <h3>Variáveis</h3>
+    <ul>
+        <li>Vendas históricas</li>
+        <li>Sazonalidade</li>
+        <li>Campanhas</li>
+        <li>Estoque</li>
+        <li>Preço</li>
+        <li>Feriados</li>
+        <li>Tendência</li>
+    </ul>
+</section>
+
+<section>
+    <h3>Escolha as evidências</h3>
+
+    <label for="vendas">Vendas históricas</label>
+    <select id="vendas">
+        <option value="0">Baixas</option>
+        <option value="1" selected>Médias</option>
+        <option value="2">Altas</option>
+    </select>
+
+    <label for="sazonalidade">Sazonalidade</label>
+    <select id="sazonalidade">
+        <option value="0">Baixa</option>
+        <option value="1">Normal</option>
+        <option value="2" selected>Alta</option>
+    </select>
+
+    <label for="campanhas">Campanhas</label>
+    <select id="campanhas">
+        <option value="0">Sem campanha</option>
+        <option value="1" selected>Campanha ativa</option>
+    </select>
+
+    <label for="estoque">Estoque</label>
+    <select id="estoque">
+        <option value="0">Estoque baixo</option>
+        <option value="1" selected>Estoque suficiente</option>
+        <option value="2">Estoque alto</option>
+    </select>
+
+    <label for="preco">Preço</label>
+    <select id="preco">
+        <option value="0">Preço alto</option>
+        <option value="1" selected>Preço normal</option>
+        <option value="2">Preço promocional</option>
+    </select>
+
+    <label for="feriados">Feriados no período</label>
+    <select id="feriados">
+        <option value="0">Sem feriados relevantes</option>
+        <option value="1" selected>Com feriados relevantes</option>
+    </select>
+
+    <label for="tendencia">Tendência</label>
+    <select id="tendencia">
+        <option value="0">Queda</option>
+        <option value="1">Estável</option>
+        <option value="2" selected>Alta</option>
+    </select>
+
+    <button onclick="executarRedeBayesiana()">Calcular demanda</button>
+</section>
+
+<section>
+    <h3>Resultado</h3>
+
+    <p>
+        <strong>Demanda esperada:</strong>
+        <span id="demandaEsperada" class="resultado">1.200 unidades</span>
+    </p>
+
+    <p>
+        <strong>Intervalo provável:</strong>
+        <span id="intervaloProvavel" class="resultado">1.050 a 1.350 unidades</span>
+    </p>
+</section>
+
+<section class="decisao">
+    <h3>Decisão</h3>
+    <ul id="listaDecisoes">
+        <li>Comprar mais estoque</li>
+        <li>Planejar campanha</li>
+        <li>Ajustar preço</li>
+        <li>Negociar com fornecedor</li>
+    </ul>
+</section>
+
+<script>
+    const probabilidades = {
+        VendasHistoricas: {
+            0: 0.2,
+            1: 0.5,
+            2: 0.3
+        },
+
+        Sazonalidade: {
+            0: 0.2,
+            1: 0.5,
+            2: 0.3
+        },
+
+        Campanhas: {
+            0: 0.6,
+            1: 0.4
+        },
+
+        Estoque: {
+            0: 0.2,
+            1: 0.6,
+            2: 0.2
+        },
+
+        Preco: {
+            0: 0.2,
+            1: 0.6,
+            2: 0.2
+        },
+
+        Feriados: {
+            0: 0.7,
+            1: 0.3
+        },
+
+        Tendencia: {
+            0: 0.2,
+            1: 0.5,
+            2: 0.3
+        },
+
+        Demanda: {
+            base: 650,
+
+            pesos: {
+                VendasHistoricas: {
+                    0: 0,
+                    1: 200,
+                    2: 400
+                },
+
+                Sazonalidade: {
+                    0: -100,
+                    1: 0,
+                    2: 100
+                },
+
+                Campanhas: {
+                    0: 0,
+                    1: 100
+                },
+
+                Estoque: {
+                    0: -150,
+                    1: 0,
+                    2: 50
+                },
+
+                Preco: {
+                    0: -120,
+                    1: 0,
+                    2: 100
+                },
+
+                Feriados: {
+                    0: 0,
+                    1: 50
+                },
+
+                Tendencia: {
+                    0: -150,
+                    1: 0,
+                    2: 100
+                }
+            }
+        }
+    };
+
+    function calcularDemanda(evidencias) {
+        let demanda = probabilidades.Demanda.base;
+
+        demanda += probabilidades.Demanda.pesos.VendasHistoricas[evidencias.VendasHistoricas];
+        demanda += probabilidades.Demanda.pesos.Sazonalidade[evidencias.Sazonalidade];
+        demanda += probabilidades.Demanda.pesos.Campanhas[evidencias.Campanhas];
+        demanda += probabilidades.Demanda.pesos.Estoque[evidencias.Estoque];
+        demanda += probabilidades.Demanda.pesos.Preco[evidencias.Preco];
+        demanda += probabilidades.Demanda.pesos.Feriados[evidencias.Feriados];
+        demanda += probabilidades.Demanda.pesos.Tendencia[evidencias.Tendencia];
+
+        if (demanda < 0) {
+            demanda = 0;
+        }
+
+        const minimo = Math.round(demanda * 0.875);
+        const maximo = Math.round(demanda * 1.125);
+
+        return {
+            esperada: Math.round(demanda),
+            minimo: minimo,
+            maximo: maximo
+        };
+    }
+
+    function definirDecisoes(demanda) {
+        if (demanda >= 1200) {
+            return [
+                "Comprar mais estoque",
+                "Planejar campanha",
+                "Ajustar preço",
+                "Negociar com fornecedor"
+            ];
+        }
+
+        if (demanda >= 800) {
+            return [
+                "Monitorar estoque",
+                "Planejar campanha moderada",
+                "Acompanhar preço dos concorrentes"
+            ];
+        }
+
+        return [
+            "Evitar compra excessiva de estoque",
+            "Criar campanha de estímulo",
+            "Revisar preço",
+            "Analisar queda de demanda"
+        ];
+    }
+
+    function executarRedeBayesiana() {
+        const evidencias = {
+            VendasHistoricas: Number(document.getElementById("vendas").value),
+            Sazonalidade: Number(document.getElementById("sazonalidade").value),
+            Campanhas: Number(document.getElementById("campanhas").value),
+            Estoque: Number(document.getElementById("estoque").value),
+            Preco: Number(document.getElementById("preco").value),
+            Feriados: Number(document.getElementById("feriados").value),
+            Tendencia: Number(document.getElementById("tendencia").value)
+        };
+
+        const resultado = calcularDemanda(evidencias);
+
+        document.getElementById("demandaEsperada").innerText = resultado.esperada + " unidades";
+        document.getElementById("intervaloProvavel").innerText = resultado.minimo + " a " + resultado.maximo + " unidades";
+
+        const decisoes = definirDecisoes(resultado.esperada);
+
+        const lista = document.getElementById("listaDecisoes");
+        lista.innerHTML = "";
+
+        decisoes.forEach(function(decisao) {
+            const item = document.createElement("li");
+            item.innerText = decisao;
+            lista.appendChild(item);
+        });
+
+        console.log("Evidências usadas:");
+        console.log(evidencias);
+
+        console.log("Resultado:");
+        console.log(resultado);
+    }
+
+    executarRedeBayesiana();
+</script>
+
+</body>
+</html>
+```

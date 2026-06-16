@@ -1,0 +1,332 @@
+```html id="caso-4-abandono-carrinho"
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício Rede Bayesiana 04</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        section {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .resultado {
+            font-size: 20px;
+            font-weight: bold;
+            color: #b26a00;
+        }
+
+        .positivo {
+            color: #1b7f3a;
+        }
+
+        .decisao {
+            background: #eef7ff;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Exercício Rede Bayesiana 04</h1>
+<h2>Abandono de carrinho</h2>
+
+<section>
+    <h3>Pergunta / Problema</h3>
+    <p>Esse cliente vai abandonar o carrinho?</p>
+</section>
+
+<section>
+    <h3>Variáveis</h3>
+    <ul>
+        <li>Valor do frete</li>
+        <li>Prazo de entrega</li>
+        <li>Tempo parado no checkout</li>
+        <li>Dispositivo</li>
+        <li>Forma de pagamento</li>
+        <li>Cupom aplicado</li>
+    </ul>
+</section>
+
+<section>
+    <h3>Escolha as evidências</h3>
+
+    <label for="frete">Valor do frete</label>
+    <select id="frete">
+        <option value="0">Frete grátis</option>
+        <option value="1">Frete baixo</option>
+        <option value="2" selected>Frete alto</option>
+    </select>
+
+    <label for="prazo">Prazo de entrega</label>
+    <select id="prazo">
+        <option value="0">Prazo curto</option>
+        <option value="1" selected>Prazo médio</option>
+        <option value="2">Prazo longo</option>
+    </select>
+
+    <label for="tempoCheckout">Tempo parado no checkout</label>
+    <select id="tempoCheckout">
+        <option value="0">Pouco tempo parado</option>
+        <option value="1">Tempo médio parado</option>
+        <option value="2" selected>Muito tempo parado</option>
+    </select>
+
+    <label for="dispositivo">Dispositivo</label>
+    <select id="dispositivo">
+        <option value="0" selected>Mobile</option>
+        <option value="1">Desktop</option>
+    </select>
+
+    <label for="pagamento">Forma de pagamento</label>
+    <select id="pagamento">
+        <option value="0">Pix</option>
+        <option value="1" selected>Cartão</option>
+        <option value="2">Boleto</option>
+        <option value="3">Erro no pagamento</option>
+    </select>
+
+    <label for="cupom">Cupom aplicado</label>
+    <select id="cupom">
+        <option value="0">Não aplicou cupom</option>
+        <option value="1" selected>Aplicou cupom</option>
+    </select>
+
+    <button onclick="executarRedeBayesiana()">Calcular abandono</button>
+</section>
+
+<section>
+    <h3>Resultado</h3>
+
+    <p>
+        <strong>Probabilidade de abandono:</strong>
+        <span id="probAbandono" class="resultado">65%</span>
+    </p>
+
+    <p>
+        <strong>Probabilidade de finalizar compra:</strong>
+        <span id="probFinalizar" class="resultado positivo">35%</span>
+    </p>
+</section>
+
+<section class="decisao">
+    <h3>Decisão</h3>
+    <ul id="listaDecisoes">
+        <li>Mostrar incentivo</li>
+        <li>Oferecer frete grátis</li>
+        <li>Enviar e-mail de recuperação</li>
+        <li>Simplificar checkout</li>
+    </ul>
+</section>
+
+<script>
+    const probabilidades = {
+        ValorDoFrete: {
+            0: 0.2,
+            1: 0.5,
+            2: 0.3
+        },
+
+        PrazoDeEntrega: {
+            0: 0.3,
+            1: 0.5,
+            2: 0.2
+        },
+
+        TempoParadoNoCheckout: {
+            0: 0.4,
+            1: 0.4,
+            2: 0.2
+        },
+
+        Dispositivo: {
+            0: 0.7,
+            1: 0.3
+        },
+
+        FormaDePagamento: {
+            0: 0.4,
+            1: 0.4,
+            2: 0.15,
+            3: 0.05
+        },
+
+        CupomAplicado: {
+            0: 0.6,
+            1: 0.4
+        },
+
+        Abandono: {
+            base: 0.10,
+
+            pesos: {
+                ValorDoFrete: {
+                    0: -0.10,
+                    1: 0.05,
+                    2: 0.20
+                },
+
+                PrazoDeEntrega: {
+                    0: 0.00,
+                    1: 0.10,
+                    2: 0.15
+                },
+
+                TempoParadoNoCheckout: {
+                    0: 0.00,
+                    1: 0.10,
+                    2: 0.20
+                },
+
+                Dispositivo: {
+                    0: 0.10,
+                    1: 0.05
+                },
+
+                FormaDePagamento: {
+                    0: 0.00,
+                    1: 0.05,
+                    2: 0.10,
+                    3: 0.20
+                },
+
+                CupomAplicado: {
+                    0: 0.10,
+                    1: -0.10
+                }
+            }
+        }
+    };
+
+    function limitarProbabilidade(valor) {
+        if (valor < 0) {
+            return 0;
+        }
+
+        if (valor > 1) {
+            return 1;
+        }
+
+        return valor;
+    }
+
+    function calcularProbabilidadeAbandono(evidencias) {
+        let probAbandono = probabilidades.Abandono.base;
+
+        probAbandono += probabilidades.Abandono.pesos.ValorDoFrete[evidencias.ValorDoFrete];
+        probAbandono += probabilidades.Abandono.pesos.PrazoDeEntrega[evidencias.PrazoDeEntrega];
+        probAbandono += probabilidades.Abandono.pesos.TempoParadoNoCheckout[evidencias.TempoParadoNoCheckout];
+        probAbandono += probabilidades.Abandono.pesos.Dispositivo[evidencias.Dispositivo];
+        probAbandono += probabilidades.Abandono.pesos.FormaDePagamento[evidencias.FormaDePagamento];
+        probAbandono += probabilidades.Abandono.pesos.CupomAplicado[evidencias.CupomAplicado];
+
+        probAbandono = limitarProbabilidade(probAbandono);
+
+        return {
+            Abandonar: probAbandono,
+            FinalizarCompra: 1 - probAbandono
+        };
+    }
+
+    function definirDecisoes(probAbandono) {
+        if (probAbandono >= 0.65) {
+            return [
+                "Mostrar incentivo",
+                "Oferecer frete grátis",
+                "Enviar e-mail de recuperação",
+                "Simplificar checkout"
+            ];
+        }
+
+        if (probAbandono >= 0.40) {
+            return [
+                "Mostrar mensagem de segurança",
+                "Reforçar prazo e benefícios",
+                "Exibir formas de pagamento alternativas"
+            ];
+        }
+
+        if (probAbandono >= 0.20) {
+            return [
+                "Manter checkout normal",
+                "Mostrar recomendação leve",
+                "Monitorar comportamento"
+            ];
+        }
+
+        return [
+            "Não oferecer desconto agora",
+            "Priorizar finalização rápida",
+            "Evitar distrações no checkout"
+        ];
+    }
+
+    function executarRedeBayesiana() {
+        const evidencias = {
+            ValorDoFrete: Number(document.getElementById("frete").value),
+            PrazoDeEntrega: Number(document.getElementById("prazo").value),
+            TempoParadoNoCheckout: Number(document.getElementById("tempoCheckout").value),
+            Dispositivo: Number(document.getElementById("dispositivo").value),
+            FormaDePagamento: Number(document.getElementById("pagamento").value),
+            CupomAplicado: Number(document.getElementById("cupom").value)
+        };
+
+        const resultado = calcularProbabilidadeAbandono(evidencias);
+
+        document.getElementById("probAbandono").innerText = Math.round(resultado.Abandonar * 100) + "%";
+        document.getElementById("probFinalizar").innerText = Math.round(resultado.FinalizarCompra * 100) + "%";
+
+        const decisoes = definirDecisoes(resultado.Abandonar);
+
+        const lista = document.getElementById("listaDecisoes");
+        lista.innerHTML = "";
+
+        decisoes.forEach(function(decisao) {
+            const item = document.createElement("li");
+            item.innerText = decisao;
+            lista.appendChild(item);
+        });
+
+        console.log("Evidências usadas:");
+        console.log(evidencias);
+
+        console.log("Resultado:");
+        console.log(resultado);
+    }
+
+    executarRedeBayesiana();
+</script>
+
+</body>
+</html>
+```
