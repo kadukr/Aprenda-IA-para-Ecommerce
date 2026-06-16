@@ -4,8 +4,8 @@
 - LLM Modelo IA que entende o Brasil\
 https://chat.maritaca.ai/
 
-- Platform OPEN IA
+- Platform OPEN IA\
 https://platform.openai.com/
 
-- Notebooklm
+- Notebooklm\
 https://notebooklm.google.com

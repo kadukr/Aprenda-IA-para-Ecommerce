@@ -1,4 +1,4 @@
-'# Lidando com Incertezas
+# Lidando com Incertezas
 
 Este README explica como lidar com incertezas usando **raciocínio probabilístico**, **estimativas**, **distribuições de probabilidade**, **Teorema de Bayes** e **Redes Bayesianas**.
 
